@@ -6,6 +6,7 @@
   <title>Admin — OnePieceGuess</title>
   <link rel="icon" href="img/straw-hat-3.png" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     /* ── Admin layout ─────────────────────────────────────────────────────── */
     .admin-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; }
@@ -120,6 +121,27 @@
     }
     .btn-delete-user:hover { background: #2a1a1a; }
     .btn-delete-user:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Stats chart panel ──────────────────────────────────────────────── */
+    .chart-stat-select {
+      width: 100%; padding: .5rem .75rem;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: .9rem;
+      outline: none; margin-bottom: 1.25rem; cursor: pointer;
+    }
+    .chart-stat-select:focus { border-color: var(--accent); }
+    .chart-wrap { position: relative; max-width: 280px; margin: 0 auto; }
+    .chart-legend {
+      display: flex; flex-wrap: wrap; gap: .5rem .9rem;
+      justify-content: center; margin-top: 1rem;
+    }
+    .chart-legend-item {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .78rem; color: var(--text-muted);
+    }
+    .chart-legend-swatch {
+      width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0;
+    }
 
     /* ── Styled confirm modal ─────────────────────────────────────────────── */
     #confirm-overlay {
@@ -297,13 +319,32 @@
         </div>
       </div>
 
-      <!-- ── Panneau droit : liste des personnages ───────────────────────── -->
-      <div class="panel" style="align-self:start">
-        <h2>📋 Personnages (<span id="char-count">…</span>)</h2>
-        <div class="char-search">
-          <input id="char-filter" type="text" placeholder="Filtrer par nom…" />
+      <!-- ── Panneau droit ─────────────────────────────────────────────────────── -->
+      <div style="display:flex;flex-direction:column;gap:1.5rem;align-self:start">
+        <!-- Liste personnages -->
+        <div class="panel">
+          <h2>📋 Personnages (<span id="char-count">…</span>)</h2>
+          <div class="char-search">
+            <input id="char-filter" type="text" placeholder="Filtrer par nom…" />
+          </div>
+          <div class="char-list" id="char-list">Chargement…</div>
         </div>
-        <div class="char-list" id="char-list">Chargement…</div>
+
+        <!-- Camembert stats -->
+        <div class="panel">
+          <h2>📊 Répartition des personnages</h2>
+          <select class="chart-stat-select" id="chart-stat">
+            <option value="genre">Genre</option>
+            <option value="fruit">Type de fruit démon</option>
+            <option value="haki">Haki</option>
+            <option value="affiliation">Top 7 affiliations</option>
+            <option value="origine">Top 7 origines</option>
+          </select>
+          <div class="chart-wrap">
+            <canvas id="stats-chart"></canvas>
+          </div>
+          <div class="chart-legend" id="chart-legend"></div>
+        </div>
       </div>
 
     </div>
@@ -338,6 +379,7 @@
       allChars = await fetchAllCharacters();
       charCount.textContent = allChars.length;
       renderList(allChars);
+      renderChart(document.getElementById('chart-stat').value);
     }
 
     function renderList(chars) {
@@ -564,6 +606,79 @@
     }
 
     // ── Boot ──────────────────────────────────────────────────────────────────
+    // ── Chart ────────────────────────────────────────────────────────────────
+    const PALETTE = [
+      '#f0c040','#4a9fd4','#5cb85c','#e06060','#a06dc8',
+      '#e07840','#48c0a0','#d4609a','#8090d0','#b0b030'
+    ];
+
+    let chartInst = null;
+
+    function buildChartData(stat) {
+      const counts = {};
+      for (const c of allChars) {
+        let key;
+        if (stat === 'genre') {
+          key = c.genre || 'Inconnu';
+        } else if (stat === 'fruit') {
+          if (!c.fruitDuDemon || c.fruitDuDemon === 'Aucun') key = 'Aucun';
+          else {
+            const t = c.typeFruitDuDemon || 'Inconnu';
+            key = (t === 'Ancient Zoan' || t === 'Mythical Zoan') ? t : t;
+          }
+        } else if (stat === 'haki') {
+          const types = c.haki && c.haki !== 'Aucun'
+            ? c.haki.split(',').map(s => s.trim()) : [];
+          if (!types.length) { counts['Aucun'] = (counts['Aucun'] || 0) + 1; continue; }
+          for (const h of types) counts[h] = (counts[h] || 0) + 1;
+          continue;
+        } else if (stat === 'affiliation') {
+          key = c.affiliation || 'Inconnu';
+        } else if (stat === 'origine') {
+          key = c.origine || 'Inconnu';
+        }
+        counts[key] = (counts[key] || 0) + 1;
+      }
+
+      let entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+      if (stat === 'affiliation' || stat === 'origine') {
+        const top = entries.slice(0, 7);
+        const rest = entries.slice(7).reduce((s,[,v]) => s+v, 0);
+        if (rest > 0) top.push(['Autres', rest]);
+        entries = top;
+      }
+      return { labels: entries.map(([k]) => k), data: entries.map(([,v]) => v) };
+    }
+
+    function renderChart(stat) {
+      const { labels, data } = buildChartData(stat);
+      const colors = labels.map((_,i) => PALETTE[i % PALETTE.length]);
+      const ctx = document.getElementById('stats-chart').getContext('2d');
+
+      if (chartInst) chartInst.destroy();
+      chartInst = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#0d0d1e', borderWidth: 2 }] },
+        options: {
+          plugins: { legend: { display: false }, tooltip: {
+            callbacks: { label: ctx => ` ${ctx.label} : ${ctx.parsed} (${Math.round(ctx.parsed/data.reduce((a,b)=>a+b,0)*100)}%)` }
+          }},
+          cutout: '58%',
+          animation: { duration: 400 }
+        }
+      });
+
+      // Custom legend
+      const legendEl = document.getElementById('chart-legend');
+      legendEl.innerHTML = labels.map((l,i) => `
+        <span class="chart-legend-item">
+          <span class="chart-legend-swatch" style="background:${colors[i]}"></span>
+          ${escHtml(l)} (${data[i]})
+        </span>`).join('');
+    }
+
+    document.getElementById('chart-stat').addEventListener('change', (e) => renderChart(e.target.value));
+
     loadChars();
     loadUsers();
   </script>
