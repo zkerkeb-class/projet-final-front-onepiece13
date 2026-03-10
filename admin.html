@@ -121,6 +121,13 @@
     }
     .btn-delete-user:hover { background: #2a1a1a; }
     .btn-delete-user:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-reset-stats {
+      padding: .25rem .6rem; background: transparent;
+      border: 1px solid #2a4a7a; color: #6ab; border-radius: 4px;
+      font-size: .75rem; cursor: pointer; transition: background .15s;
+      flex-shrink: 0;
+    }
+    .btn-reset-stats:hover { background: #1a2a3a; }
 
     /* ── Stats chart panel ──────────────────────────────────────────────── */
     .chart-stat-select {
@@ -528,6 +535,7 @@
             <span>👤 ${escHtml(u.username)}</span>
             <span style="color:var(--text-muted);font-size:.75rem">${u.createdAt?.slice(0,10) || ''}</span>
             <span class="user-role role-badge ${u.role}" style="margin-left:auto">${u.role}</span>
+            <button class="btn-reset-stats" data-uname="${escHtml(u.username)}" title="Réinitialiser les stats">↺ Stats</button>
             <button class="btn-delete-user" data-uid="${u.id}" data-uname="${escHtml(u.username)}"
               ${u.id === currentUserId ? 'disabled title="Impossible de se supprimer soi-même"' : ''}
             >🗑️</button>
@@ -537,6 +545,20 @@
     }
 
     document.getElementById('user-list').addEventListener('click', async (e) => {
+      // Reset stats
+      const resetBtn = e.target.closest('.btn-reset-stats');
+      if (resetBtn) {
+        const uname = resetBtn.dataset.uname;
+        if (!await showConfirm(`Réinitialiser les statistiques de <strong>${uname}</strong> ?`)) return;
+        localStorage.removeItem(`op_stats_${uname}`);
+        const fb = document.getElementById('user-feedback');
+        fb.textContent = `✅ Stats de "${uname}" réinitialisées`;
+        fb.className   = 'form-feedback ok';
+        setTimeout(() => { fb.className = 'form-feedback'; }, 3000);
+        return;
+      }
+
+      // Delete user
       const btn = e.target.closest('.btn-delete-user');
       if (!btn || btn.disabled) return;
       const uid   = Number(btn.dataset.uid);
