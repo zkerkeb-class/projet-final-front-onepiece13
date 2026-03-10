@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OnePieceGuess 🏴‍☠️</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>One<span>Piece</span>Guess 🏴‍☠️</h1>
+    <nav>
+      <a href="index.html" class="active">Jeu</a>
+      <a href="test.html" id="nav-test" style="display:none">Test API</a>
+      <a href="admin.html" id="nav-admin" style="display:none">Admin</a>
+      <div id="user-bar" style="display:inline-flex;align-items:center;gap:.75rem;margin-left:1rem;"></div>
+    </nav>
+  </header>
+
+  <main>
+    <section id="search-section">
+      <p>Devinez le personnage One Piece du jour en saisissant un nom ci-dessous.</p>
+
+      <div id="search-wrapper">
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Nom d'un personnage…"
+          autocomplete="off"
+        />
+        <div id="suggestions"></div>
+      </div>
+
+      <button id="guess-btn">Valider</button>
+    </section>
+
+    <div id="message"></div>
+
+    <div id="win-banner">
+      <h2>🎉 Trouvé !</h2>
+      <p>C'était <strong id="win-name"></strong> — en <strong id="win-attempts"></strong> tentative(s).</p>
+      <button id="new-game-btn">Nouvelle partie</button>
+    </div>
+
+    <div id="attempts-counter">Tentatives : <span>0</span></div>
+
+    <section id="results-section"></section>
+  </main>
+
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>

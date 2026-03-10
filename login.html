@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion — OnePieceGuess 🏴‍☠️</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    }
+
+    .login-logo { text-align: center; margin-bottom: 2rem; }
+    .login-logo h1 { font-size: 2rem; color: var(--accent); }
+    .login-logo h1 span { color: var(--accent2); }
+    .login-logo p { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-muted); }
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: var(--accent); }
+
+    #login-btn, #register-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity .2s;
+    }
+    #login-btn:hover, #register-btn:hover    { opacity: .85; }
+    #login-btn:disabled, #register-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .login-error {
+      background: var(--wrong);
+      border: 1px solid #aa4a4a;
+      color: #ffd0d0;
+      border-radius: var(--radius);
+      padding: .65rem 1rem;
+      font-size: .875rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    .login-error.show { display: block; }
+
+    .login-hint {
+      margin-top: 1.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+    .login-hint code { color: var(--accent); background: var(--surface2); padding: 1px 5px; border-radius: 3px; }
+
+    .toggle-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.25rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    .toggle-link a {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      font: inherit;
+      padding: 0;
+    }
+    .toggle-link a:hover { color: var(--accent2); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>One<span>Piece</span>Guess 🏴‍☠️</h1>
+      <p id="box-subtitle">Connectez-vous pour accéder au jeu</p>
+    </div>
+
+    <!-- ── Login form ──────────────────────────────────────────────────── -->
+    <div id="login-section">
+      <form id="login-form" autocomplete="on">
+        <div class="form-group">
+          <label for="username">Nom d'utilisateur</label>
+          <input id="username" type="text" name="username" placeholder="admin" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input id="password" type="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <button id="login-btn" type="submit">Se connecter</button>
+      </form>
+
+      <div class="login-error" id="login-error"></div>
+
+      <p class="login-hint">
+        Comptes par défaut :<br/>
+        Admin — <code>admin</code> / <code>onepiece</code><br/>
+        User &nbsp;— <code>luffy</code> / <code>mugiwara</code>
+      </p>
+
+      <hr class="divider" />
+      <p class="toggle-link">Pas encore de compte ? <a id="show-register">Créer un compte</a></p>
+    </div>
+
+    <!-- ── Register form ───────────────────────────────────────────────── -->
+    <div id="register-section" style="display:none">
+      <form id="register-form" autocomplete="off">
+        <div class="form-group">
+          <label for="reg-username">Nom d'utilisateur</label>
+          <input id="reg-username" type="text" name="username" placeholder="pirate42" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Mot de passe <span style="color:var(--text-muted);font-size:.78rem">(4 caractères min.)</span></label>
+          <input id="reg-password" type="password" name="password" placeholder="••••••••" required minlength="4" />
+        </div>
+        <div class="form-group">
+          <label for="reg-confirm">Confirmer le mot de passe</label>
+          <input id="reg-confirm" type="password" name="confirm" placeholder="••••••••" required minlength="4" />
+        </div>
+        <button id="register-btn" type="submit">Créer le compte</button>
+      </form>
+
+      <div class="login-error" id="register-error"></div>
+
+      <hr class="divider" />
+      <p class="toggle-link">Déjà un compte ? <a id="show-login">Se connecter</a></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { login, getToken, saveAuth, API_BASE } from './js/api.js';
+
+    // Si déjà connecté → redirection directe
+    if (getToken()) window.location.href = 'index.html';
+
+    // ── Toggle login / register ──────────────────────────────────────────────
+    const loginSection    = document.getElementById('login-section');
+    const registerSection = document.getElementById('register-section');
+    const subtitle        = document.getElementById('box-subtitle');
+
+    document.getElementById('show-register').addEventListener('click', () => {
+      loginSection.style.display    = 'none';
+      registerSection.style.display = '';
+      subtitle.textContent = 'Créez votre compte pour rejoindre l\'aventure';
+    });
+    document.getElementById('show-login').addEventListener('click', () => {
+      registerSection.style.display = 'none';
+      loginSection.style.display    = '';
+      subtitle.textContent = 'Connectez-vous pour accéder au jeu';
+    });
+
+    // ── Login ────────────────────────────────────────────────────────────────
+    const loginForm  = document.getElementById('login-form');
+    const loginBtn   = document.getElementById('login-btn');
+    const loginErrEl = document.getElementById('login-error');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      loginBtn.disabled    = true;
+      loginBtn.textContent = 'Connexion…';
+      loginErrEl.className = 'login-error';
+
+      try {
+        await login(username, password);
+        window.location.href = 'index.html';
+      } catch (err) {
+        loginErrEl.textContent = `❌ ${err.message}`;
+        loginErrEl.className   = 'login-error show';
+        loginBtn.disabled    = false;
+        loginBtn.textContent = 'Se connecter';
+      }
+    });
+
+    // ── Register ─────────────────────────────────────────────────────────────
+    const registerForm  = document.getElementById('register-form');
+    const registerBtn   = document.getElementById('register-btn');
+    const registerErrEl = document.getElementById('register-error');
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const confirm  = document.getElementById('reg-confirm').value;
+
+      registerErrEl.className = 'login-error';
+
+      if (password !== confirm) {
+        registerErrEl.textContent = '❌ Les mots de passe ne correspondent pas';
+        registerErrEl.className   = 'login-error show';
+        return;
+      }
+
+      registerBtn.disabled    = true;
+      registerBtn.textContent = 'Création…';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        saveAuth(data.token, data.user);
+        window.location.href = 'index.html';
+      } catch (err) {
+        registerErrEl.textContent = `❌ ${err.message}`;
+        registerErrEl.className   = 'login-error show';
+        registerBtn.disabled    = false;
+        registerBtn.textContent = 'Créer le compte';
+      }
+    });
+  </script>
+</body>
+</html>
