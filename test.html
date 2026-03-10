@@ -100,9 +100,17 @@
     <!-- Manual guess tester -->
     <div class="test-card">
       <h2>🧪 Test manuel d'une devinette</h2>
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;margin-bottom:0.75rem;">
-        <input id="manual-guess"  type="text" placeholder="Votre guess (ex: Zoro)"  style="flex:1;min-width:160px;padding:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);" />
-        <input id="manual-target" type="text" placeholder="Cible (ex: Nami)"         style="flex:1;min-width:160px;padding:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);" />
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:0.75rem;">
+        <div style="flex:1;min-width:160px;position:relative;">
+          <input id="manual-guess" type="text" placeholder="Votre guess (ex: Zoro)"
+            style="width:100%;padding:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;" autocomplete="off" />
+          <div id="sugg-guess" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;z-index:200;"></div>
+        </div>
+        <div style="flex:1;min-width:160px;position:relative;">
+          <input id="manual-target" type="text" placeholder="Cible (ex: Nami)"
+            style="width:100%;padding:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;" autocomplete="off" />
+          <div id="sugg-target" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;z-index:200;"></div>
+        </div>
         <button id="manual-btn" class="test-btn" style="padding:.6rem 1.2rem;">Envoyer</button>
       </div>
       <div class="response-box open" id="res-manual">En attente…</div>
@@ -222,6 +230,43 @@
     });
 
     // ── Manual tester ──────────────────────────────────────────────────────────
+    let allNames = [];
+
+    async function loadNames() {
+      try { allNames = await fetchCharacterNames(); } catch { /* silent */ }
+    }
+
+    function setupAutocomplete(inputId, suggId) {
+      const input = document.getElementById(inputId);
+      const sugg  = document.getElementById(suggId);
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { sugg.style.display = 'none'; return; }
+        const matches = allNames.filter(n => n.toLowerCase().includes(q)).slice(0, 10);
+        if (!matches.length) { sugg.style.display = 'none'; return; }
+        sugg.innerHTML = matches.map(n =>
+          `<div class="suggestion-item" data-name="${n}">${n}</div>`
+        ).join('');
+        sugg.style.display = 'block';
+      });
+
+      sugg.addEventListener('click', (e) => {
+        const item = e.target.closest('.suggestion-item');
+        if (!item) return;
+        input.value = item.dataset.name;
+        sugg.style.display = 'none';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !sugg.contains(e.target))
+          sugg.style.display = 'none';
+      });
+    }
+
+    setupAutocomplete('manual-guess',  'sugg-guess');
+    setupAutocomplete('manual-target', 'sugg-target');
+
     document.getElementById('manual-btn').addEventListener('click', async () => {
       const guess  = document.getElementById('manual-guess').value.trim();
       const target = document.getElementById('manual-target').value.trim();
@@ -237,7 +282,6 @@
     });
 
     // ── Boot ───────────────────────────────────────────────────────────────────
-    autoHealth();
-  </script>
+    autoHealth();    loadNames();  </script>
 </body>
 </html>
