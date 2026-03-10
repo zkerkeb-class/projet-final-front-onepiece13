@@ -336,9 +336,8 @@
           <select class="chart-stat-select" id="chart-stat">
             <option value="genre">Genre</option>
             <option value="fruit">Type de fruit démon</option>
-            <option value="haki">Haki</option>
-            <option value="affiliation">Top 7 affiliations</option>
-            <option value="origine">Top 7 origines</option>
+            <option value="affiliation">Affiliations</option>
+            <option value="origine">Origines</option>
           </select>
           <div class="chart-wrap">
             <canvas id="stats-chart"></canvas>
@@ -626,12 +625,6 @@
             const t = c.typeFruitDuDemon || 'Inconnu';
             key = (t === 'Ancient Zoan' || t === 'Mythical Zoan') ? t : t;
           }
-        } else if (stat === 'haki') {
-          const types = c.haki && c.haki !== 'Aucun'
-            ? c.haki.split(',').map(s => s.trim()) : [];
-          if (!types.length) { counts['Aucun'] = (counts['Aucun'] || 0) + 1; continue; }
-          for (const h of types) counts[h] = (counts[h] || 0) + 1;
-          continue;
         } else if (stat === 'affiliation') {
           key = c.affiliation || 'Inconnu';
         } else if (stat === 'origine') {
@@ -640,13 +633,7 @@
         counts[key] = (counts[key] || 0) + 1;
       }
 
-      let entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-      if (stat === 'affiliation' || stat === 'origine') {
-        const top = entries.slice(0, 7);
-        const rest = entries.slice(7).reduce((s,[,v]) => s+v, 0);
-        if (rest > 0) top.push(['Autres', rest]);
-        entries = top;
-      }
+      const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
       return { labels: entries.map(([k]) => k), data: entries.map(([,v]) => v) };
     }
 
