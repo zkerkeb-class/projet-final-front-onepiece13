@@ -1,0 +1,13 @@
+{
+  "name": "onepiece-guess-frontend",
+  "version": "1.0.0",
+  "description": "Frontend du jeu OnePieceGuess",
+  "scripts": {
+    "start": "lite-server",
+    "dev": "lite-server"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  }
+}
