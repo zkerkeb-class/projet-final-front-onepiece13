@@ -1,4 +1,4 @@
-import { fetchCharacterNames, fetchRandomCharacter, postGuess } from './api.js';
+import { fetchCharacterNames, fetchRandomCharacter, postGuess, getUser } from './api.js';
 import { guardAuth, renderUserBar } from './auth.js';
 
 // ── Auth guard — redirect to login.html if no token ───────────────────────────
@@ -14,6 +14,26 @@ import('./api.js').then(({ getUser }) => {
     if (testLink)  testLink.style.display  = '';
   }
 });
+
+// ── Stats ────────────────────────────────────────────────────────────────────
+function statsKey() {
+  const u = getUser();
+  return u ? `op_stats_${u.username}` : null;
+}
+export function getStats() {
+  const k = statsKey();
+  if (!k) return null;
+  return JSON.parse(localStorage.getItem(k) || '{"found":0,"totalAttempts":0,"bestScore":null}');
+}
+function recordWin(n) {
+  const k = statsKey();
+  if (!k) return;
+  const s = getStats();
+  s.found++;
+  s.totalAttempts += n;
+  s.bestScore = s.bestScore === null ? n : Math.min(s.bestScore, n);
+  localStorage.setItem(k, JSON.stringify(s));
+}
 
 // ── State ────────────────────────────────────────────────────────────────────
 let allNames = [];
@@ -121,6 +141,7 @@ async function handleGuess() {
 
     if (data.correct) {
       gameOver = true;
+      recordWin(attempts);
       searchInput.disabled = true;
       winName.textContent = targetCharacter.personnage;
       winAttempts.textContent = attempts;
