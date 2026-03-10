@@ -77,7 +77,7 @@
     }
     .char-search input:focus { border-color: var(--accent); }
 
-    .char-list { max-height: 280px; overflow-y: auto; }
+    .char-list { max-height: 520px; overflow-y: auto; }
     .char-item {
       display: flex; align-items: center; justify-content: space-between;
       padding: .5rem .75rem; border-radius: 6px;
@@ -298,7 +298,7 @@
       </div>
 
       <!-- ── Panneau droit : liste des personnages ───────────────────────── -->
-      <div class="panel">
+      <div class="panel" style="align-self:start">
         <h2>📋 Personnages (<span id="char-count">…</span>)</h2>
         <div class="char-search">
           <input id="char-filter" type="text" placeholder="Filtrer par nom…" />
