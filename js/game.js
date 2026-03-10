@@ -64,6 +64,10 @@ const winBanner      = document.getElementById('win-banner');
 const winAttempts    = document.getElementById('win-attempts');
 const winName        = document.getElementById('win-name');
 const newGameBtn     = document.getElementById('new-game-btn');
+const giveupBtn      = document.getElementById('giveup-btn');
+const abandonBanner  = document.getElementById('abandon-banner');
+const abandonName    = document.getElementById('abandon-name');
+const newGameBtnAbandon = document.getElementById('new-game-btn-abandon');
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
@@ -84,9 +88,11 @@ async function startNewGame() {
   updateAttemptsCounter();
   clearResults();
   winBanner.style.display = 'none';
+  abandonBanner.style.display = 'none';
   searchInput.value = '';
   searchInput.disabled = false;
   guessBtn.disabled = false;
+  giveupBtn.disabled = false;
 }
 
 // ── Search / Autocomplete ─────────────────────────────────────────────────────
@@ -124,6 +130,23 @@ newGameBtn.addEventListener('click', async () => {
   await startNewGame();
   showMessage('Nouveau personnage choisi — bonne chance !', 'info');
   setTimeout(hideMessage, 2500);
+});
+
+newGameBtnAbandon.addEventListener('click', async () => {
+  await startNewGame();
+  showMessage('Nouveau personnage choisi — bonne chance !', 'info');
+  setTimeout(hideMessage, 2500);
+});
+
+giveupBtn.addEventListener('click', () => {
+  if (gameOver) return;
+  gameOver = true;
+  searchInput.disabled = true;
+  guessBtn.disabled = true;
+  giveupBtn.disabled = true;
+  abandonName.textContent = targetCharacter.personnage;
+  abandonBanner.style.display = 'block';
+  // Pas d'appel à recordWin() → stats non affectées
 });
 
 // ── Guess Logic ───────────────────────────────────────────────────────────────

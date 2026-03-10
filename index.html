@@ -33,9 +33,16 @@
       </div>
 
       <button id="guess-btn">Valider</button>
+      <button id="giveup-btn">🏳️ Donner sa langue au chat</button>
     </section>
 
     <div id="message"></div>
+
+    <div id="abandon-banner">
+      <h2>😔 Abandonné !</h2>
+      <p>C'était <strong id="abandon-name"></strong>.</p>
+      <button id="new-game-btn-abandon">Nouvelle partie</button>
+    </div>
 
     <div id="win-banner">
       <h2>🎉 Trouvé !</h2>
@@ -44,6 +51,17 @@
     </div>
 
     <div id="attempts-counter">Tentatives : <span>0</span></div>
+
+    <div id="legend">
+      <span class="legend-title">Indicateurs de couleur</span>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="legend-swatch cell-correct"></span><span>Correct</span></div>
+        <div class="legend-item"><span class="legend-swatch cell-partial"></span><span>Partiel</span></div>
+        <div class="legend-item"><span class="legend-swatch cell-wrong"></span><span>Incorrect</span></div>
+        <div class="legend-item"><span class="legend-swatch cell-wrong arrow-swatch">↑</span><span>Supérieur</span></div>
+        <div class="legend-item"><span class="legend-swatch cell-wrong arrow-swatch">↓</span><span>Inférieur</span></div>
+      </div>
+    </div>
 
     <section id="results-section"></section>
   </main>

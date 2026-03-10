@@ -114,6 +114,20 @@ main {
 }
 .suggestion-item:hover { background: var(--surface); color: var(--accent); }
 
+#giveup-btn {
+  margin-top: .5rem;
+  padding: .55rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  font-size: .85rem;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+#giveup-btn:hover:not(:disabled) { border-color: var(--accent2); color: var(--accent2); }
+#giveup-btn:disabled { opacity: .35; cursor: default; }
+
 #guess-btn {
   padding: 0.75rem 2rem;
   background: var(--accent);
@@ -199,6 +213,31 @@ main {
 }
 #win-banner h2 { font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
 #win-banner p  { color: var(--text-muted); }
+
+/* ── Abandon Banner ────────────────────────────────────────────────────── */
+#abandon-banner {
+  display: none;
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #1a0f0a, #2a1a10);
+  border: 2px solid var(--accent2);
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+#abandon-banner h2 { font-size: 2rem; color: var(--accent2); margin-bottom: .5rem; }
+#abandon-banner p  { color: var(--text-muted); }
+#new-game-btn-abandon {
+  margin-top: 1rem;
+  padding: .65rem 1.5rem;
+  background: transparent;
+  border: 2px solid var(--accent2);
+  color: var(--accent2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background .2s, color .2s;
+}
+#new-game-btn-abandon:hover { background: var(--accent2); color: #fff; }
 
 #new-game-btn {
   margin-top: 1rem;
@@ -341,7 +380,90 @@ main {
 }
 #logout-btn:hover { background: var(--accent2); color: #fff; }
 
-/* ── Stats Modal ─────────────────────────────────────────────────────────── */
+#legend-btn {
+  display: none;
+}
+
+#legend {
+  text-align: center;
+  margin: .75rem 0 1.25rem;
+}
+.legend-title {
+  display: block;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted);
+  margin-bottom: .6rem;
+}
+
+/* ── Legend Modal ─────────────────────────────────────────────────────────── */
+#legend-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeInOverlay .15s ease;
+}
+.legend-modal {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1.5rem 2rem 1.75rem;
+  position: relative;
+  text-align: center;
+  min-width: 280px;
+  animation: slideUp .2s ease;
+}
+.legend-modal h3 {
+  color: var(--accent);
+  font-size: 1rem;
+  letter-spacing: .5px;
+  margin-bottom: 1.1rem;
+  text-transform: uppercase;
+}
+.legend-close {
+  position: absolute;
+  top: .5rem; right: .6rem;
+  background: none; border: none;
+  color: var(--text-muted); font-size: .9rem;
+  cursor: pointer; padding: .2rem .45rem;
+  border-radius: 4px; transition: color .2s;
+}
+.legend-close:hover { color: var(--accent2); }
+
+.legend-grid {
+  display: flex;
+  gap: 1.25rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .45rem;
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+.legend-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.arrow-swatch {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: rgba(255,255,255,.55);
+}
+
+/* Stats Modal */
 #stats-modal-overlay {
   position: fixed;
   inset: 0;

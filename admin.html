@@ -36,6 +36,9 @@
     }
     .field-group input:focus, .field-group select:focus { border-color: var(--accent); }
     .field-group.full { grid-column: 1 / -1; }
+    .haki-checks { display: flex; gap: 1.25rem; align-items: center; padding: .5rem 0; }
+    .check-label { display: flex; align-items: center; gap: .4rem; font-size: .9rem; color: var(--text); cursor: pointer; }
+    .check-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 
     .form-actions { display: flex; gap: .75rem; margin-top: 1rem; flex-wrap: wrap; }
     .btn-primary {
@@ -164,7 +167,11 @@
               </div>
               <div class="field-group full">
                 <label>Haki</label>
-                <input id="f-haki" type="text" placeholder="Aucun / Observation, Armament…" />
+                <div class="haki-checks">
+                  <label class="check-label"><input type="checkbox" id="f-haki-conqueror" value="Conqueror" /> Conqueror</label>
+                  <label class="check-label"><input type="checkbox" id="f-haki-observation" value="Observation" /> Observation</label>
+                  <label class="check-label"><input type="checkbox" id="f-haki-armament" value="Armament" /> Armament</label>
+                </div>
               </div>
               <div class="field-group">
                 <label>Dernière prime (texte)</label>
@@ -353,7 +360,10 @@
       document.getElementById('f-affiliation').value= c.affiliation          || '';
       document.getElementById('f-fruit').value      = c.fruitDuDemon         || 'Aucun';
       document.getElementById('f-typeFruit').value  = c.typeFruitDuDemon     || 'Aucun';
-      document.getElementById('f-haki').value       = c.haki                 || 'Aucun';
+      const hakiVals = (c.haki || '').split(',').map(s => s.trim());
+      document.getElementById('f-haki-conqueror').checked  = hakiVals.includes('Conqueror');
+      document.getElementById('f-haki-observation').checked = hakiVals.includes('Observation');
+      document.getElementById('f-haki-armament').checked   = hakiVals.includes('Armament');
       document.getElementById('f-prime').value      = c.dernierePrime        || '';
       document.getElementById('f-primeVal').value   = c.dernierePrimeValeur  || '';
       document.getElementById('f-hauteur').value    = c.hauteur              || '';
@@ -372,7 +382,9 @@
         affiliation:         document.getElementById('f-affiliation').value.trim(),
         fruitDuDemon:        document.getElementById('f-fruit').value.trim()    || 'Aucun',
         typeFruitDuDemon:    document.getElementById('f-typeFruit').value,
-        haki:                document.getElementById('f-haki').value.trim()     || 'Aucun',
+        haki:                ['Conqueror','Observation','Armament']
+                               .filter(h => document.getElementById('f-haki-'+h.toLowerCase()).checked)
+                               .join(', ') || 'Aucun',
         dernierePrime:       document.getElementById('f-prime').value.trim(),
         dernierePrimeValeur: Number(document.getElementById('f-primeVal').value) || 0,
         hauteur:             document.getElementById('f-hauteur').value.trim(),

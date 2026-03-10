@@ -122,3 +122,32 @@ elle vide le `localStorage`, et redirige immédiatement vers `login.html`.
 | `test.html`  | `guardAuth()` → idem |
 | `admin.html` | `guardAdmin()` → redirige si pas admin |
 | `login.html` | Redirige vers `index.html` si déjà connecté |
+
+---
+
+## Fonctionnalités bonus
+
+### 🔐 Auth & sécurité
+| Fonctionnalité | Détail |
+|---------------|--------|
+| Déconnexion automatique sur 401 | `apiFetch` intercepte toute réponse 401, vide le `localStorage` et redirige vers `login.html` |
+| Inscription publique | `POST /api/auth/signup` permet à n'importe qui de créer un compte (rôle `user`) sans intervention admin |
+| Panel admin réservé | `test.html` et `admin.html` inaccessibles aux utilisateurs classiques (`guardAdmin`) |
+| Liens nav conditionnels | Les liens "Admin" et "Test API" dans la navigation ne s'affichent que pour les admins |
+
+### 🎮 Gameplay
+| Fonctionnalité | Détail |
+|---------------|--------|
+| Direction de l'arc | La colonne "Premier arc" indique ↑ ou ↓ selon que l'arc cible se situe avant ou après dans la chronologie (28 arcs ordonnés) |
+| Haki partiel | Si le personnage deviné partage certains types de Haki avec la cible (mais pas tous), la case s'affiche en **orange** |
+| Colonne Fruit du Démon fusionnée | Affiche le **type** du fruit (Paramecia / Logia / Zoan) si le personnage en possède un, sinon "Non" — en remplacement des deux colonnes séparées |
+| Donner sa langue au chat | Bouton permettant d'abandonner la partie et de révéler le personnage cible. La partie ne compte **pas** dans les statistiques du joueur |
+
+### 📊 Statistiques joueur
+En cliquant sur son **nom d'utilisateur** dans le header, chaque joueur accède à une modale de statistiques personnelles (stockées en `localStorage`) :
+- **Personnages trouvés** — nombre total de victoires
+- **Tentatives totales** — cumul de toutes les tentatives sur les parties gagnées
+- **Meilleur score** — nombre minimal de tentatives pour trouver un personnage
+- **Moyenne tentatives / victoire** — calculée automatiquement
+
+Les stats sont **par utilisateur** (clé `op_stats_<username>`) et persistent entre les sessions.
