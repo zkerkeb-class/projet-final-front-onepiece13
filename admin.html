@@ -6,7 +6,6 @@
   <title>Admin — OnePieceGuess</title>
   <link rel="icon" href="img/straw-hat-3.png" />
   <link rel="stylesheet" href="css/style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"><\/script>
   <style>
     /* ── Admin layout ─────────────────────────────────────────────────────── */
     .admin-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; }
@@ -104,23 +103,7 @@
     }
     .btn-delete:hover { background: #2a1a1a; }
 
-    /* ── Stats panel ──────────────────────────────────────────────────── */
-    .right-col { display: flex; flex-direction: column; gap: 1.5rem; }
-    .stat-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    .stat-tab {
-      padding: .35rem .85rem;
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 20px; color: var(--text-muted); font-size: .8rem;
-      cursor: pointer; transition: all .2s;
-    }
-    .stat-tab.active {
-      background: var(--accent); color: #000;
-      border-color: var(--accent); font-weight: 700;
-    }
-    .chart-wrap { position: relative; max-width: 320px; margin: 0 auto; }
-    .chart-legend { display: flex; flex-wrap: wrap; gap: .5rem .85rem; justify-content: center; margin-top: 1rem; }
-    .legend-dot { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; color: var(--text-muted); }
-    .legend-dot span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    /* ── User management section ─────────────────────────────────────────── */
     .user-section { margin-top: 1.5rem; }
     .user-item {
       display: flex; align-items: center; gap: .75rem;
@@ -314,31 +297,13 @@
         </div>
       </div>
 
-      <!-- ── Panneau droit : liste des personnages + stats ───────────── -->
-      <div class="right-col">
-        <div class="panel">
-          <h2>📋 Personnages (<span id="char-count">…</span>)</h2>
-          <div class="char-search">
-            <input id="char-filter" type="text" placeholder="Filtrer par nom…" />
-          </div>
-          <div class="char-list" id="char-list">Chargement…</div>
+      <!-- ── Panneau droit : liste des personnages ───────────────────────── -->
+      <div class="panel">
+        <h2>📋 Personnages (<span id="char-count">…</span>)</h2>
+        <div class="char-search">
+          <input id="char-filter" type="text" placeholder="Filtrer par nom…" />
         </div>
-
-        <!-- Camembert stats -->
-        <div class="panel" id="stats-panel">
-          <h2>📊 Statistiques</h2>
-          <div class="stat-tabs">
-            <button class="stat-tab active" data-stat="genre">Genre</button>
-            <button class="stat-tab" data-stat="fruit">Fruit du démon</button>
-            <button class="stat-tab" data-stat="haki">Haki</button>
-            <button class="stat-tab" data-stat="origine">Origine (top 6)</button>
-            <button class="stat-tab" data-stat="affiliation">Affiliation (top 6)</button>
-          </div>
-          <div class="chart-wrap">
-            <canvas id="stats-chart" height="280"></canvas>
-          </div>
-          <div class="chart-legend" id="chart-legend"></div>
-        </div>
+        <div class="char-list" id="char-list">Chargement…</div>
       </div>
 
     </div>
@@ -373,89 +338,7 @@
       allChars = await fetchAllCharacters();
       charCount.textContent = allChars.length;
       renderList(allChars);
-      buildChart(allChars, activeStat);
     }
-
-    // ── Chart ─────────────────────────────────────────────────────────────────
-    const CHART_PALETTE = [
-      '#f5c518','#4fc3f7','#a5d6a7','#ef9a9a','#ce93d8',
-      '#ffcc80','#80deea','#f48fb1','#b0bec5','#ffe082'
-    ];
-    let chartInstance = null;
-    let activeStat = 'genre';
-
-    function getStatData(chars, stat) {
-      const counts = {};
-      chars.forEach(c => {
-        let key;
-        if (stat === 'genre')       key = c.genre || 'Inconnu';
-        else if (stat === 'fruit') {
-          if (!c.fruitDuDemon || c.fruitDuDemon === 'Aucun') key = 'Sans fruit';
-          else {
-            const t = c.typeFruitDuDemon || 'Inconnu';
-            key = (t === 'Ancient Zoan' || t === 'Mythical Zoan') ? 'Zoan' : t;
-          }
-        }
-        else if (stat === 'haki') {
-          if (!c.haki || c.haki === 'Aucun') { counts['Aucun'] = (counts['Aucun'] || 0) + 1; return; }
-          c.haki.split(',').map(h => h.trim()).forEach(h => { counts[h] = (counts[h] || 0) + 1; });
-          return;
-        }
-        else if (stat === 'origine')     key = c.origine     || 'Inconnu';
-        else if (stat === 'affiliation') key = c.affiliation || 'Inconnu';
-        counts[key] = (counts[key] || 0) + 1;
-      });
-
-      let entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      // For top-6 stats, group rest as "Autres"
-      if (stat === 'origine' || stat === 'affiliation') {
-        const top = entries.slice(0, 6);
-        const rest = entries.slice(6).reduce((s, [,v]) => s + v, 0);
-        if (rest > 0) top.push(['Autres', rest]);
-        entries = top;
-      }
-      return { labels: entries.map(e => e[0]), data: entries.map(e => e[1]) };
-    }
-
-    function buildChart(chars, stat) {
-      const { labels, data } = getStatData(chars, stat);
-      const bg = labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]);
-      const ctx = document.getElementById('stats-chart').getContext('2d');
-
-      if (chartInstance) chartInstance.destroy();
-      chartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: bg, borderColor: 'rgba(0,0,0,.3)', borderWidth: 2 }] },
-        options: {
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.label} : ${ctx.raw} (${Math.round(ctx.raw / data.reduce((a,b)=>a+b,0)*100)}%)`
-              }
-            }
-          },
-          cutout: '58%',
-          animation: { duration: 400 }
-        }
-      });
-
-      // Custom legend
-      const legendEl = document.getElementById('chart-legend');
-      legendEl.innerHTML = labels.map((l, i) =>
-        `<span class="legend-dot"><span style="background:${bg[i]}"></span>${escHtml(l)} (${data[i]})</span>`
-      ).join('');
-    }
-
-    // Tab switching
-    document.querySelectorAll('.stat-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.stat-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeStat = btn.dataset.stat;
-        if (allChars.length) buildChart(allChars, activeStat);
-      });
-    });
 
     function renderList(chars) {
       if (!chars.length) { charList.innerHTML = '<p style="color:var(--text-muted);padding:.5rem">Aucun personnage.</p>'; return; }
