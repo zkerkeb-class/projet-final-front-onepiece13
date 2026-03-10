@@ -55,7 +55,6 @@ export function renderUserBar(containerId = 'user-bar') {
       <button class="user-name-btn" id="user-name-btn" title="Voir mes stats">${escHtml(user.username)}</button>
       <span class="role-badge ${user.role}">${user.role}</span>
     </span>
-    ${user.role === 'admin' ? '<a href="admin.html" id="nav-admin">Admin</a>' : ''}
     <button id="logout-btn">Déconnexion</button>
   `;
 
