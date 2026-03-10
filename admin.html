@@ -112,6 +112,54 @@
     }
     .user-item:last-child { border-bottom: none; }
     .user-role { margin-left: auto; }
+    .btn-delete-user {
+      padding: .25rem .6rem; background: transparent;
+      border: 1px solid #7a2a2a; color: #f88; border-radius: 4px;
+      font-size: .75rem; cursor: pointer; transition: background .15s;
+      flex-shrink: 0;
+    }
+    .btn-delete-user:hover { background: #2a1a1a; }
+    .btn-delete-user:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Styled confirm modal ─────────────────────────────────────────────── */
+    #confirm-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    #confirm-overlay.open { display: flex; }
+    .confirm-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.25rem;
+      max-width: 400px; width: 90%;
+      text-align: center;
+      animation: fadeUp .2s ease;
+    }
+    .confirm-box p {
+      color: var(--text); font-size: .98rem; line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .confirm-box strong { color: var(--accent); }
+    .confirm-actions { display: flex; gap: .75rem; justify-content: center; }
+    .confirm-actions .btn-danger {
+      padding: .6rem 1.4rem; background: #7a2020; color: #ffdada;
+      border: 1px solid #a03030; border-radius: 6px;
+      font-weight: 700; cursor: pointer; font-size: .9rem;
+      transition: background .2s;
+    }
+    .confirm-actions .btn-danger:hover { background: #9a2828; }
+    .confirm-actions .btn-cancel2 {
+      padding: .6rem 1.2rem; background: transparent;
+      border: 1px solid var(--border); color: var(--text-muted);
+      border-radius: 6px; cursor: pointer; font-size: .9rem;
+      transition: border-color .2s, color .2s;
+    }
+    .confirm-actions .btn-cancel2:hover { border-color: var(--text-muted); color: var(--text); }
   </style>
 </head>
 <body>
@@ -125,6 +173,17 @@
       <div id="user-bar" style="display:inline-flex;align-items:center;gap:.75rem;margin-left:1rem;"></div>
     </nav>
   </header>
+
+  <!-- ── Confirm modal ──────────────────────────────────────────────────── -->
+  <div id="confirm-overlay">
+    <div class="confirm-box">
+      <p id="confirm-msg"></p>
+      <div class="confirm-actions">
+        <button class="btn-danger"  id="confirm-ok">Confirmer</button>
+        <button class="btn-cancel2" id="confirm-cancel">Annuler</button>
+      </div>
+    </div>
+  </div>
 
   <main>
     <div class="admin-grid">
@@ -313,7 +372,7 @@
         if (char) fillForm(char);
       }
       if (action === 'delete') {
-        if (!confirm(`Supprimer "${name}" ? Cette action est irréversible.`)) return;
+        if (!await showConfirm(`Supprimer <strong>${name}</strong> ? Cette action est irréversible.`)) return;
         try {
           await deleteCharacter(name);
           showFeedback(`"${name}" supprimé ✓`, 'ok');
@@ -413,24 +472,52 @@
     }
 
     // ── User management ───────────────────────────────────────────────────────
+    let currentUserId = null;
+    fetchMe().then(me => { currentUserId = me.id; }).catch(() => {});
+
     async function loadUsers() {
       try {
-        const { fetchMe: _m, ...api } = await import('./js/api.js');
-        // Import the fetchMe-like function from api directly
         const res = await fetch('http://localhost:3001/api/auth/users', {
           headers: { Authorization: `Bearer ${localStorage.getItem('op_token')}` }
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const users = await res.json();
         document.getElementById('user-list').innerHTML = users.map(u => `
-          <div class="user-item">
+          <div class="user-item" data-uid="${u.id}">
             <span>👤 ${escHtml(u.username)}</span>
-            <span style="color:var(--text-muted);font-size:.75rem">${u.createdAt?.slice(0,10)}</span>
-            <span class="user-role role-badge ${u.role}">${u.role}</span>
+            <span style="color:var(--text-muted);font-size:.75rem">${u.createdAt?.slice(0,10) || ''}</span>
+            <span class="user-role role-badge ${u.role}" style="margin-left:auto">${u.role}</span>
+            <button class="btn-delete-user" data-uid="${u.id}" data-uname="${escHtml(u.username)}"
+              ${u.id === currentUserId ? 'disabled title="Impossible de se supprimer soi-même"' : ''}
+            >🗑️</button>
           </div>
         `).join('');
       } catch { /* ignore */ }
     }
+
+    document.getElementById('user-list').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-delete-user');
+      if (!btn || btn.disabled) return;
+      const uid   = Number(btn.dataset.uid);
+      const uname = btn.dataset.uname;
+      if (!await showConfirm(`Supprimer le compte <strong>${uname}</strong> ? Cette action est irréversible.`)) return;
+      try {
+        const res = await fetch(`http://localhost:3001/api/auth/users/${uid}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${localStorage.getItem('op_token')}` }
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error || `HTTP ${res.status}`); }
+        const fb = document.getElementById('user-feedback');
+        fb.textContent = `✅ Compte "${uname}" supprimé`;
+        fb.className   = 'form-feedback ok';
+        setTimeout(() => { fb.className = 'form-feedback'; }, 3000);
+        loadUsers();
+      } catch (err) {
+        const fb = document.getElementById('user-feedback');
+        fb.textContent = `❌ ${err.message}`;
+        fb.className   = 'form-feedback error';
+      }
+    });
 
     document.getElementById('user-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -450,6 +537,26 @@
         fb.className   = 'form-feedback error';
       }
     });
+
+    // ── Confirm modal ──────────────────────────────────────────────────────────
+    function showConfirm(htmlMsg) {
+      return new Promise(resolve => {
+        const overlay = document.getElementById('confirm-overlay');
+        document.getElementById('confirm-msg').innerHTML = htmlMsg;
+        overlay.classList.add('open');
+        const cleanup = (result) => {
+          overlay.classList.remove('open');
+          document.getElementById('confirm-ok').removeEventListener('click', onOk);
+          document.getElementById('confirm-cancel').removeEventListener('click', onCancel);
+          resolve(result);
+        };
+        const onOk     = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+        document.getElementById('confirm-ok').addEventListener('click', onOk);
+        document.getElementById('confirm-cancel').addEventListener('click', onCancel);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); }, { once: true });
+      });
+    }
 
     // ── Utilities ─────────────────────────────────────────────────────────────
     function escHtml(s) {
