@@ -1,13 +1,23 @@
-# OnePieceGuess 🏴‍☠️
+# OnePieceGuess
 
 Jeu de devinettes de personnages One Piece, inspiré de Wordle.
 
 ---
 
+## Présentation vidéo
+
+https://youtu.be/k5tTtrLKen0 (Partie 1)
+https://youtu.be/F-SW7ntgOQ8 (Partie 2)
+
+---
+
 ## Lancement rapide
 
-Depuis la racine du projet, double-cliquer sur `start.bat`.  
-Le script installe les dépendances si nécessaire, lance les deux serveurs et ouvre le navigateur.
+Installer les dépendances et lancer les deux serveurs :
+```bash
+cd projet-final-back-onepiece13 && npm install && npm start
+cd ../projet-final-front-onepiece13 && npm install && npm start
+```
 
 | Service  | URL                             |
 |----------|---------------------------------|
@@ -16,7 +26,8 @@ Le script installe les dépendances si nécessaire, lance les deux serveurs et o
 | Test API | http://localhost:3000/test.html |
 | Admin    | http://localhost:3000/admin.html|
 
-**Compte par défaut :** `admin` / `onepiece`
+**Identifiants par défaut(admin):** `admin` / `onepiece`
+**Identifiants par défaut(user):** `luffy` / `mugiwara`
 
 ---
 
@@ -24,75 +35,109 @@ Le script installe les dépendances si nécessaire, lance les deux serveurs et o
 
 ```
 projet_one_piece/
-├── start.bat                          ← Script de lancement tout-en-un
 ├── projet-final-back-onepiece13/
-│   ├── server.js                      ← API Express
-│   ├── users.json                     ← Comptes (auto-créé au 1er démarrage)
+│   ├── server.js                      # API Express
+│   ├── users.json                     # Comptes
 │   └── onepieceguess_database.json
 └── projet-final-front-onepiece13/
-    ├── login.html                     ← Page de connexion
-    ├── index.html                     ← Jeu (protégé)
-    ├── admin.html                     ← CRUD personnages (admin)
-    ├── test.html                      ← Tests API (protégé)
+    ├── login.html                     # Page de connexion
+    ├── index.html                     # Jeu (protégé)
+    ├── admin.html                     # CRUD personnages (admin)
+    ├── test.html                      # Tests API (protégé)
     ├── css/style.css
     └── js/
-        ├── api.js                     ← Toutes les fonctions d'appel API
-        ├── auth.js                    ← Guards de routes protégées
-        └── game.js                    ← Logique du jeu
+        ├── api.js                     # Toutes les fonctions d'appel API
+        ├── auth.js                    # Guards de routes protégées
+        └── game.js                    # Logique du jeu
 ```
 
 ---
 
-## Choix du système d'authentification : JWT
+## Pages de l'application
 
-### JWT seul (sans session serveur)
+### login.html
+Page publique de connexion. Redirige vers le jeu si l'utilisateur est déjà connecté.
 
-Nous avons choisi **JWT (JSON Web Token)** sans session serveur côté Express,
-pour les raisons suivantes :
+### index.html
+Page principale du jeu. Accessible uniquement aux utilisateurs connectés.
+
+### admin.html
+Panel d'administration pour la gestion des personnages (CRUD). Accès réservé aux administrateurs.
+
+### test.html
+Outil de débogage et de vérification de l'API. Accessible uniquement aux administrateurs.
+
+Permet de :
+- Vérifier la santé de l'API (`/api/health`)
+- Tester les endpoints GET (noms, personnage aléatoire, défi du jour, recherche)
+- Tester les endpoints POST (envoyer une devinette)
+- Tester manuellement des devinettes avec autocomplétion
+- Afficher les statistiques de la base de données
+
+---
+
+## Fonctionnalités du jeu
+
+### Gameplay
+- **Direction de l'arc** : colonne indiquant si l'arc cible se situe avant ou après dans la chronologie (28 arcs ordonnables)
+- **Haki partiel** : affichage en orange si le personnage deviné partage certains types de Haki (mais pas tous) avec la cible
+- **Fruit du Démon fusionné** : affiche le type (Paramecia / Logia / Zoan) ou "Non"
+- **Donner sa langue au chat** : bouton pour abandonner et révéler le personnage (ne compte pas dans les statistiques)
+
+### Statistiques joueur
+Chaque joueur peut consulter ses statistiques personnelles (stockage en `localStorage`) :
+- Personnages trouvés (nombre total de victoires)
+- Tentatives totales (cumul de toutes les tentatives)
+- Meilleur score (nombre minimal de tentatives)
+- Moyenne tentatives par victoire
+
+Les statistiques sont persistantes entre les sessions.
+
+---
+
+## Système d'authentification : JWT
+
+### JWT sans session serveur
+
+Le système utilise **JWT (JSON Web Token)** sans gestion de sessions côté Express :
 
 | Critère | JWT stateless | Session serveur |
 |---------|--------------|-----------------|
-| Scalabilité | ✅ Aucun état à partager entre instances | ❌ Nécessite un store partagé (Redis…) |
-| Implémentation | ✅ Simple (`jsonwebtoken`) | Plus complexe |
-| Adapté au front SPA | ✅ Token dans `localStorage` | Nécessite cookies + CSRF |
-| Révocation immédiate | ⚠️ Requiert une blacklist | ✅ Natif |
+| Scalabilité | Aucun état à partager entre instances | Nécessite un store partagé (Redis, etc.) |
+| Implémentation | Simple (`jsonwebtoken`) | Plus complexe |
+| Adapté au frontend SPA | Token dans `localStorage` | Nécessite cookies + CSRF |
+| Révocation immédiate | Avec blacklist en mémoire | Natif |
 
-### Gestion de la révocation (token blacklist)
+### Gestion de la révocation
 
-Pour gérer le **logout** et le **bonus 401** sans sessions, nous maintenons une
-`Set` en mémoire des tokens révoqués côté serveur.  
-Le token y est ajouté lors du `POST /api/auth/logout` et est vérifié par le
-middleware `requireAuth` à chaque requête protégée.
+Une `Set` en mémoire enregistre les tokens révoqués :
+- Les tokens sont ajoutés lors du `POST /api/auth/logout`
+- Vérification par le middleware `requireAuth` à chaque requête protégée
 
-> **Limite** : la blacklist est perdue au redémarrage. En production, on
-> utiliserait Redis avec un TTL égal à l'expiration du token (2 h).
+Limite : la blacklist est perdue au redémarrage. En production, utiliser Redis avec un TTL égal à l'expiration du token (2 heures).
 
-### Expiration
+### Durée de vie et déconnexion
 
-Les tokens expirent après **2 heures** (`JWT_EXPIRES=2h`).  
-L'API renvoie une 401 si le token est expiré, invalide, ou dans la blacklist.
-
-### Bonus : déconnexion automatique sur 401
-
-Dans `js/api.js`, la fonction `apiFetch` intercepte toute réponse `401` :
-elle vide le `localStorage`, et redirige immédiatement vers `login.html`.
+- Les tokens expirent après **2 heures** (`JWT_EXPIRES=2h`)
+- L'API retourne un code 401 si le token est expiré, invalide ou révoqué
+- La fonction `apiFetch` dans `js/api.js` intercepte les réponses 401, efface le `localStorage` et redirige vers `login.html`
 
 ---
 
 ## Routes API
 
-### Auth (publiques)
+### Authentification (publiques)
 | Méthode | Route | Description |
 |---------|-------|-------------|
-| POST | `/api/auth/login` | Connexion → `{ token, user }` |
+| POST | `/api/auth/login` | Connexion : retourne `{ token, user }` |
 
-### Auth (protégées — Bearer token requis)
+### Authentification (protégées — Bearer token requis)
 | Méthode | Route | Description |
 |---------|-------|-------------|
 | POST | `/api/auth/logout` | Révoque le token courant |
 | GET  | `/api/auth/me` | Profil de l'utilisateur connecté |
-| POST | `/api/auth/register` | Crée un compte *(admin only)* |
-| GET  | `/api/auth/users` | Liste des comptes *(admin only)* |
+| POST | `/api/auth/register` | Crée un compte (admin uniquement) |
+| GET  | `/api/auth/users` | Liste des comptes (admin uniquement) |
 
 ### Personnages (publiques)
 | Méthode | Route | Description |
@@ -103,9 +148,9 @@ elle vide le `localStorage`, et redirige immédiatement vers `login.html`.
 | GET | `/api/characters/random` | Personnage aléatoire |
 | GET | `/api/characters/daily` | Index du personnage du jour |
 | GET | `/api/characters/:name` | Détail d'un personnage |
-| POST | `/api/guess` | `{ guess, targetName }` → comparaison |
+| POST | `/api/guess` | `{ guess, targetName }` — comparaison |
 
-### Personnages CRUD (protégées)
+### Personnages — Modification (protégées, admin uniquement)
 | Méthode | Route | Description |
 |---------|-------|-------------|
 | POST | `/api/characters` | Créer un personnage |
@@ -114,40 +159,17 @@ elle vide le `localStorage`, et redirige immédiatement vers `login.html`.
 
 ---
 
-## Routes frontend protégées
+## Sécurité
 
+### Accès aux pages
 | Page | Protection |
-|------|-----------|
-| `index.html` | `guardAuth()` → redirige vers `login.html` si pas de token |
-| `test.html`  | `guardAuth()` → idem |
-| `admin.html` | `guardAdmin()` → redirige si pas admin |
-| `login.html` | Redirige vers `index.html` si déjà connecté |
+|------|-------------|
+| `index.html` | Nécessite authentification (redirige vers login si aucun token) |
+| `admin.html` | Nécessite authentification + droits admin |
+| `test.html` | Nécessite authentification + droits admin |
+| `login.html` | Redirige vers le jeu si déjà connecté |
 
----
-
-## Fonctionnalités bonus
-
-### 🔐 Auth & sécurité
-| Fonctionnalité | Détail |
-|---------------|--------|
-| Déconnexion automatique sur 401 | `apiFetch` intercepte toute réponse 401, vide le `localStorage` et redirige vers `login.html` |
-| Inscription publique | `POST /api/auth/signup` permet à n'importe qui de créer un compte (rôle `user`) sans intervention admin |
-| Panel admin réservé | `test.html` et `admin.html` inaccessibles aux utilisateurs classiques (`guardAdmin`) |
-| Liens nav conditionnels | Les liens "Admin" et "Test API" dans la navigation ne s'affichent que pour les admins |
-
-### 🎮 Gameplay
-| Fonctionnalité | Détail |
-|---------------|--------|
-| Direction de l'arc | La colonne "Premier arc" indique ↑ ou ↓ selon que l'arc cible se situe avant ou après dans la chronologie (28 arcs ordonnés) |
-| Haki partiel | Si le personnage deviné partage certains types de Haki avec la cible (mais pas tous), la case s'affiche en **orange** |
-| Colonne Fruit du Démon fusionnée | Affiche le **type** du fruit (Paramecia / Logia / Zoan) si le personnage en possède un, sinon "Non" — en remplacement des deux colonnes séparées |
-| Donner sa langue au chat | Bouton permettant d'abandonner la partie et de révéler le personnage cible. La partie ne compte **pas** dans les statistiques du joueur |
-
-### 📊 Statistiques joueur
-En cliquant sur son **nom d'utilisateur** dans le header, chaque joueur accède à une modale de statistiques personnelles (stockées en `localStorage`) :
-- **Personnages trouvés** — nombre total de victoires
-- **Tentatives totales** — cumul de toutes les tentatives sur les parties gagnées
-- **Meilleur score** — nombre minimal de tentatives pour trouver un personnage
-- **Moyenne tentatives / victoire** — calculée automatiquement
-
-Les stats sont **par utilisateur** (clé `op_stats_<username>`) et persistent entre les sessions.
+### Contrôle d'accès
+- **Déconnexion automatique sur 401** : la fonction `apiFetch` intercepte les réponses 401, efface le stockage local et redirige vers `login.html`
+- **Navigation conditionnelle** : les liens "Admin" et "Test API" ne s'affichent que pour les administrateurs
+- **Endpoints protégés** : certains endpoints nécessitent un Bearer token valide et les droits admin
