@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test API — OnePieceGuess</title>
+  <link rel="icon" href="img/straw-hat-3.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>One<span>Piece</span>Guess</h1>
+    <nav>
+      <a href="index.html">Jeu</a>
+      <a href="test.html" class="active">Test API</a>
+      <a href="admin.html">Admin</a>
+      <div id="user-bar" style="display:inline-flex;align-items:center;gap:.75rem;margin-left:1rem;"></div>
+    </nav>
+  </header>
+
+  <main>
+    <h2 style="color:var(--accent);margin-bottom:1.5rem">Vérification de l'API backend</h2>
+
+    <!-- Overall status -->
+    <div id="overall-status" class="overall-status checking">
+      <div id="overall-dot" class="status-dot"></div>
+      <span id="overall-text">Connexion à l'API en cours…</span>
+    </div>
+
+    <!-- Health check -->
+    <div class="test-card">
+      <h2>🔍 Endpoints GET</h2>
+
+      <div class="test-endpoint">
+        <div class="status-dot" id="dot-health"></div>
+        <span class="method-badge">GET</span>
+        <span class="test-url">/api/health</span>
+        <button class="test-btn" data-endpoint="health">Tester</button>
+      </div>
+      <div class="response-box" id="res-health"></div>
+
+      <div class="test-endpoint">
+        <div class="status-dot" id="dot-names"></div>
+        <span class="method-badge">GET</span>
+        <span class="test-url">/api/characters/names</span>
+        <button class="test-btn" data-endpoint="names">Tester</button>
+      </div>
+      <div class="response-box" id="res-names"></div>
+
+      <div class="test-endpoint">
+        <div class="status-dot" id="dot-random"></div>
+        <span class="method-badge">GET</span>
+        <span class="test-url">/api/characters/random</span>
+        <button class="test-btn" data-endpoint="random">Tester</button>
+      </div>
+      <div class="response-box" id="res-random"></div>
+
+      <div class="test-endpoint">
+        <div class="status-dot" id="dot-daily"></div>
+        <span class="method-badge">GET</span>
+        <span class="test-url">/api/characters/daily</span>
+        <button class="test-btn" data-endpoint="daily">Tester</button>
+      </div>
+      <div class="response-box" id="res-daily"></div>
+
+      <div class="test-endpoint">
+        <div class="status-dot" id="dot-char"></div>
+        <span class="method-badge">GET</span>
+        <span class="test-url">/api/characters/Luffy</span>
+        <button class="test-btn" data-endpoint="char">Tester</button>
+      </div>
+      <div class="response-box" id="res-char"></div>
+
+      <div class="test-endpoint">
+        <div class="status-dot" id="dot-all"></div>
+        <span class="method-badge">GET</span>
+        <span class="test-url">/api/characters?search=zo</span>
+        <button class="test-btn" data-endpoint="all">Tester</button>
+      </div>
+      <div class="response-box" id="res-all"></div>
+    </div>
+
+    <!-- POST guess -->
+    <div class="test-card">
+      <h2>📬 Endpoint POST</h2>
+
+      <div class="test-endpoint">
+        <div class="status-dot" id="dot-guess"></div>
+        <span class="method-badge post">POST</span>
+        <span class="test-url">/api/guess</span>
+        <button class="test-btn" data-endpoint="guess">Tester</button>
+      </div>
+      <div style="padding:0.5rem 0; color:var(--text-muted); font-size:0.8rem;">
+        Ce test envoie : <code style="color:#8af0c0">{ "guess": "Zoro", "targetName": "Nami" }</code>
+      </div>
+      <div class="response-box" id="res-guess"></div>
+    </div>
+
+    <!-- Manual guess tester -->
+    <div class="test-card">
+      <h2>🧪 Test manuel d'une devinette</h2>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:0.75rem;">
+        <div style="flex:1;min-width:160px;position:relative;">
+          <input id="manual-guess" type="text" placeholder="Votre guess (ex: Zoro)"
+            style="width:100%;padding:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;" autocomplete="off" />
+          <div id="sugg-guess" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;z-index:200;"></div>
+        </div>
+        <div style="flex:1;min-width:160px;position:relative;">
+          <input id="manual-target" type="text" placeholder="Cible (ex: Nami)"
+            style="width:100%;padding:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;" autocomplete="off" />
+          <div id="sugg-target" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;z-index:200;"></div>
+        </div>
+        <button id="manual-btn" class="test-btn" style="padding:.6rem 1.2rem;">Envoyer</button>
+      </div>
+      <div class="response-box open" id="res-manual">En attente…</div>
+    </div>
+
+    <!-- Database stats -->
+    <div class="test-card">
+      <h2>📊 Statistiques de la base de données</h2>
+      <div id="stats-content" style="color:var(--text-muted);">Chargement…</div>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      fetchHealth, fetchCharacterNames, fetchAllCharacters,
+      fetchRandomCharacter, fetchCharacter, postGuess
+    } from './js/api.js';
+    import { guardAdmin, renderUserBar } from './js/auth.js';
+
+    guardAdmin();
+    renderUserBar();
+
+    const API_BASE = 'http://localhost:3001/api';
+
+    // ── Generic helpers ────────────────────────────────────────────────────────
+    function setDot(id, ok) {
+      const el = document.getElementById(id);
+      if (el) { el.className = `status-dot ${ok ? 'ok' : 'error'}`; }
+    }
+
+    function showRes(id, data) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = JSON.stringify(data, null, 2);
+      el.classList.add('open');
+    }
+
+    // ── Auto health check on load ──────────────────────────────────────────────
+    async function autoHealth() {
+      const overall = document.getElementById('overall-status');
+      const dot     = document.getElementById('overall-dot');
+      const txt     = document.getElementById('overall-text');
+      try {
+        const data = await fetchHealth();
+        setDot('dot-health', true);
+        overall.className = 'overall-status ok';
+        dot.className = 'status-dot ok';
+        txt.textContent = `✅ API en ligne — ${data.totalCharacters} personnages chargés (${data.timestamp})`;
+        showRes('res-health', data);
+        loadStats();
+      } catch (err) {
+        overall.className = 'overall-status error';
+        dot.className = 'status-dot error';
+        txt.textContent = `❌ API inaccessible sur http://localhost:3001 — Lancez le backend avec start.bat`;
+        setDot('dot-health', false);
+      }
+    }
+
+    // ── Stats ──────────────────────────────────────────────────────────────────
+    async function loadStats() {
+      try {
+        const chars = await fetchAllCharacters();
+        const genres = {};
+        const affiliations = {};
+        const fruits = { 'Aucun': 0, autre: 0 };
+        chars.forEach(c => {
+          genres[c.genre] = (genres[c.genre] || 0) + 1;
+          affiliations[c.affiliation] = (affiliations[c.affiliation] || 0) + 1;
+          c.fruitDuDemon === 'Aucun' ? fruits['Aucun']++ : fruits.autre++;
+        });
+        const topAff = Object.entries(affiliations).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        document.getElementById('stats-content').innerHTML = `
+          <p><strong>Total :</strong> ${chars.length} personnages</p>
+          <p><strong>Genres :</strong> ${Object.entries(genres).map(([k,v]) => `${k} (${v})`).join(', ')}</p>
+          <p><strong>Fruit du démon :</strong> ${fruits.autre} avec, ${fruits['Aucun']} sans</p>
+          <p><strong>Top 5 affiliations :</strong></p>
+          <ul style="margin-left:1.5rem;color:var(--text-muted);">
+            ${topAff.map(([k,v]) => `<li>${k} — ${v}</li>`).join('')}
+          </ul>
+        `;
+      } catch { /* silent */ }
+    }
+
+    // ── Button handlers ────────────────────────────────────────────────────────
+    document.querySelectorAll('.test-btn[data-endpoint]').forEach(btn => {
+      if (btn.id === 'manual-btn') return;
+      btn.addEventListener('click', async () => {
+        const ep = btn.dataset.endpoint;
+        btn.disabled = true;
+        try {
+          let data;
+          switch (ep) {
+            case 'health': data = await fetchHealth(); setDot('dot-health', true); break;
+            case 'names':  data = await fetchCharacterNames(); setDot('dot-names', true); break;
+            case 'random': data = await fetchRandomCharacter(); setDot('dot-random', true); break;
+            case 'daily':  {
+              const res = await fetch(`${API_BASE}/characters/daily`);
+              data = await res.json();
+              setDot('dot-daily', true);
+              break;
+            }
+            case 'char': data = await fetchCharacter('Luffy'); setDot('dot-char', true); break;
+            case 'all':  data = await fetchAllCharacters({ search: 'zo' }); setDot('dot-all', true); break;
+            case 'guess':
+              data = await postGuess('Zoro', 'Nami');
+              setDot('dot-guess', true);
+              break;
+          }
+          showRes(`res-${ep}`, data);
+        } catch (err) {
+          setDot(`dot-${ep}`, false);
+          showRes(`res-${ep}`, { error: err.message });
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // ── Manual tester ──────────────────────────────────────────────────────────
+    let allNames = [];
+
+    async function loadNames() {
+      try { allNames = await fetchCharacterNames(); } catch { /* silent */ }
+    }
+
+    function setupAutocomplete(inputId, suggId) {
+      const input = document.getElementById(inputId);
+      const sugg  = document.getElementById(suggId);
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { sugg.style.display = 'none'; return; }
+        const matches = allNames.filter(n => n.toLowerCase().includes(q)).slice(0, 10);
+        if (!matches.length) { sugg.style.display = 'none'; return; }
+        sugg.innerHTML = matches.map(n =>
+          `<div class="suggestion-item" data-name="${n}">${n}</div>`
+        ).join('');
+        sugg.style.display = 'block';
+      });
+
+      sugg.addEventListener('click', (e) => {
+        const item = e.target.closest('.suggestion-item');
+        if (!item) return;
+        input.value = item.dataset.name;
+        sugg.style.display = 'none';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !sugg.contains(e.target))
+          sugg.style.display = 'none';
+      });
+    }
+
+    setupAutocomplete('manual-guess',  'sugg-guess');
+    setupAutocomplete('manual-target', 'sugg-target');
+
+    document.getElementById('manual-btn').addEventListener('click', async () => {
+      const guess  = document.getElementById('manual-guess').value.trim();
+      const target = document.getElementById('manual-target').value.trim();
+      const box    = document.getElementById('res-manual');
+      if (!guess || !target) { box.textContent = '⚠️ Remplissez les deux champs.'; return; }
+      box.textContent = 'Chargement…';
+      try {
+        const data = await postGuess(guess, target);
+        box.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        box.textContent = `❌ Erreur : ${err.message}`;
+      }
+    });
+
+    // ── Boot ───────────────────────────────────────────────────────────────────
+    autoHealth();    loadNames();  </script>
+</body>
+</html>
